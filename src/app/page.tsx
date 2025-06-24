@@ -10,6 +10,7 @@ import Navigation from '@/components/Navigation';
 import HabitTracker from '@/components/HabitTracker';
 import HabitForm from '@/components/HabitForm';
 import Leaderboard from '@/components/Leaderboard';
+import DataManager from '@/components/DataManager';
 
 export default function Home() {
   const [users, setUsers] = useLocalStorage<User[]>('habit-tracker-users', []);
@@ -83,6 +84,10 @@ export default function Home() {
     setActiveTab('habits');
   };
 
+  const handleDataImported = () => {
+    window.location.reload();
+  };
+
   if (!currentUser) {
     return <UserSetup onUserCreate={handleUserCreate} existingUsers={users} />;
   }
@@ -145,6 +150,8 @@ export default function Home() {
           currentUserId={currentUser.id}
         />
       )}
+
+      <DataManager onDataImported={handleDataImported} />
     </div>
   );
 }
