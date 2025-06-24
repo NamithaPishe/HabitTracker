@@ -128,7 +128,7 @@ const UserSetup: React.FC<UserSetupProps> = ({ onUserCreate, existingUsers }) =>
 
         <div className="mt-6 pt-6 border-t">
           <p className="text-xs text-gray-500 text-center">
-            💡 Tip: Use the data manager (📊 button) to share your habit data with friends!
+            💡 Tip: Join a friend's group to sync data across devices and browsers!
           </p>
         </div>
       </div>

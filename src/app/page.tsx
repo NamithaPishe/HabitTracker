@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { User, Habit, HabitEntry, UserStats } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { calculateUserStats } from '@/utils/scoreUtils';
+import { getGroupData, updateGroupData } from '@/utils/groupManager';
+import { exportData, importData } from '@/utils/dataManager';
 
 import UserSetup from '@/components/UserSetup';
 import Navigation from '@/components/Navigation';
@@ -11,6 +13,7 @@ import HabitTracker from '@/components/HabitTracker';
 import HabitForm from '@/components/HabitForm';
 import Leaderboard from '@/components/Leaderboard';
 import DataManager from '@/components/DataManager';
+import GroupManager from '@/components/GroupManager';
 
 export default function Home() {
   const [users, setUsers] = useLocalStorage<User[]>('habit-tracker-users', []);
@@ -20,12 +23,44 @@ export default function Home() {
   
   const [activeTab, setActiveTab] = useState<'habits' | 'leaderboard'>('habits');
   const [showHabitForm, setShowHabitForm] = useState(false);
+  const [showGroupManager, setShowGroupManager] = useState(false);
   const [userStats, setUserStats] = useState<UserStats[]>([]);
+  const [currentGroupCode, setCurrentGroupCode] = useLocalStorage<string | null>('current-group-code', null);
 
   useEffect(() => {
     const stats = users.map(user => calculateUserStats(entries, habits, user.id));
     setUserStats(stats);
   }, [users, habits, entries]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const groupCode = urlParams.get('group');
+    if (groupCode && groupCode !== currentGroupCode) {
+      setCurrentGroupCode(groupCode);
+      loadGroupData(groupCode);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentGroupCode) {
+      const currentData = {
+        users,
+        habits,
+        entries,
+        lastUpdated: new Date().toISOString()
+      };
+      updateGroupData(currentGroupCode, currentData);
+    }
+  }, [users, habits, entries, currentGroupCode]);
+
+  const loadGroupData = (groupCode: string) => {
+    const groupData = getGroupData(groupCode);
+    if (groupData) {
+      setUsers(groupData.users);
+      setHabits(groupData.habits);
+      setEntries(groupData.entries);
+    }
+  };
 
   const handleUserCreate = (user: User) => {
     const existingUserIndex = users.findIndex(u => u.id === user.id);
@@ -88,6 +123,12 @@ export default function Home() {
     window.location.reload();
   };
 
+  const handleGroupJoined = (groupCode: string) => {
+    setCurrentGroupCode(groupCode);
+    loadGroupData(groupCode);
+    setShowGroupManager(false);
+  };
+
   if (!currentUser) {
     return <UserSetup onUserCreate={handleUserCreate} existingUsers={users} />;
   }
@@ -109,13 +150,22 @@ export default function Home() {
                 <h2 className="text-2xl font-bold text-gray-800">My Habits</h2>
                 <p className="text-gray-600">Track your daily habits and build streaks</p>
               </div>
-              <button
-                onClick={() => setShowHabitForm(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
-              >
-                <span>+</span>
-                <span>Add Habit</span>
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowGroupManager(true)}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center space-x-2"
+                >
+                  <span>👥</span>
+                  <span>Groups</span>
+                </button>
+                <button
+                  onClick={() => setShowHabitForm(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
+                >
+                  <span>+</span>
+                  <span>Add Habit</span>
+                </button>
+              </div>
             </div>
 
             <HabitTracker
@@ -151,7 +201,26 @@ export default function Home() {
         />
       )}
 
+      {showGroupManager && (
+        <GroupManager
+          currentData={{
+            users,
+            habits,
+            entries,
+            lastUpdated: new Date().toISOString()
+          }}
+          onGroupJoined={handleGroupJoined}
+          onClose={() => setShowGroupManager(false)}
+        />
+      )}
+
       <DataManager onDataImported={handleDataImported} />
+      
+      {currentGroupCode && (
+        <div className="fixed bottom-4 left-4 bg-purple-100 text-purple-800 px-3 py-2 rounded-lg text-sm">
+          Group: {currentGroupCode}
+        </div>
+      )}
     </div>
   );
 }

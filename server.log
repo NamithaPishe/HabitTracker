@@ -23,3 +23,11 @@
 
  ✓ Starting...
  ✓ Ready in 1478ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1004ms (727 modules)
+ GET / 200 in 1180ms
+ GET / 200 in 79ms
+ ✓ Compiled /favicon.ico in 181ms (408 modules)
+ GET /favicon.ico 200 in 235ms
+ GET /?group=61M91E 200 in 116ms
+ GET /favicon.ico 200 in 4ms
